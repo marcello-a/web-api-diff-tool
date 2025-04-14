@@ -74,42 +74,47 @@ const compareChunks = async (
 ): Promise<Difference[]> => {
     const differences: Difference[] = []
     
+    // If no properties specified, get all properties from the first item
+    const propsToUse = propsToCompare.length > 0 
+        ? propsToCompare 
+        : (data1[0] ? Object.keys(data1[0]) : []) as (keyof PhotoBook)[]
+    
     const map2 = new Map(
         data2.map((item, index) => [
-            getItemKey(item, propsToCompare), 
+            getItemKey(item, propsToUse), 
             { item, index }
         ])
     )
     
     data1.forEach((item1, i) => {
-        const key1 = getItemKey(item1, propsToCompare)
+        const key1 = getItemKey(item1, propsToUse)
         const match = map2.get(key1)
         
         if (!match) {
             differences.push({
                 index: i,
                 type: 'deleted',
-                left: filterProperties(item1, propsToCompare),
+                left: filterProperties(item1, propsToUse),
                 right: null
             })
-        } else if (hasDifferences(item1, match.item, propsToCompare)) {
+        } else if (hasDifferences(item1, match.item, propsToUse)) {
             differences.push({
                 index: i,
                 type: 'changed',
-                left: filterProperties(item1, propsToCompare),
-                right: filterProperties(match.item, propsToCompare)
+                left: filterProperties(item1, propsToUse),
+                right: filterProperties(match.item, propsToUse)
             })
         }
     })
     
     data2.forEach((item2, i) => {
-        const key2 = getItemKey(item2, propsToCompare)
-        if (!data1.some(item1 => getItemKey(item1, propsToCompare) === key2)) {
+        const key2 = getItemKey(item2, propsToUse)
+        if (!data1.some(item1 => getItemKey(item1, propsToUse) === key2)) {
             differences.push({
                 index: i,
                 type: 'new',
                 left: null,
-                right: filterProperties(item2, propsToCompare)
+                right: filterProperties(item2, propsToUse)
             })
         }
     })
